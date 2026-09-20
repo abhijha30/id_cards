@@ -1,0 +1,242 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens.
+ * Surfaces step up in lightness: ink (page) < coal (cards) < coal-2 (inputs, raised).
+ * Text: fog (primary), mist (secondary, 7:1 on coal), dim (tertiary, 5:1 on coal).
+ * The four accents are the light tints of the Google palette, used sparingly: one per team,
+ * plus focus rings and the primary action.
+ */
+@theme static {
+  --color-ink: #08090b;
+  --color-coal: #14161a;
+  --color-coal-2: #1b1e23;
+  --color-line: #2a2e35;
+  --color-line-strong: #3d424c;
+  --color-fog: #eceff3;
+  --color-mist: #a3aab5;
+  --color-dim: #8a93a0;
+
+  --color-g-blue: #8ab4f8;
+  --color-g-red: #f28b82;
+  --color-g-yellow: #fdd663;
+  --color-g-green: #81c995;
+
+  --color-danger: #ff8f86;
+  --color-ok: #81c995;
+
+  --font-display: "Bricolage Grotesque Variable", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-fog);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-g-blue);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-g-blue) 35%, transparent);
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.15rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-coal-2);
+    color: var(--color-fog);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+  }
+  .btn:hover {
+    border-color: var(--color-mist);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn[disabled],
+  .btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-primary {
+    background: var(--color-g-blue);
+    border-color: var(--color-g-blue);
+    color: #0a1424;
+  }
+  .btn-primary:hover {
+    background: #a5c6fa;
+    border-color: #a5c6fa;
+  }
+  .btn-danger {
+    border-color: color-mix(in srgb, var(--color-danger) 55%, transparent);
+    color: var(--color-danger);
+    background: transparent;
+  }
+  .btn-danger:hover {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border-color: var(--color-danger);
+  }
+  .btn-quiet {
+    background: transparent;
+    border-color: transparent;
+    color: var(--color-mist);
+  }
+  .btn-quiet:hover {
+    color: var(--color-fog);
+    background: var(--color-coal-2);
+    border-color: transparent;
+  }
+  .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.875rem;
+    border-radius: 0.65rem;
+  }
+
+  /* Form controls */
+  .field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-fog);
+  }
+  .field-hint {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--color-dim);
+  }
+  .field-error {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--color-danger);
+  }
+  .input {
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-coal-2);
+    color: var(--color-fog);
+    font: inherit;
+    font-size: 1rem;
+  }
+  .input::placeholder {
+    color: var(--color-dim);
+  }
+  .input:hover {
+    border-color: var(--color-mist);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+  textarea.input {
+    min-height: 7rem;
+    resize: vertical;
+  }
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23a3aab5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.95rem center;
+    padding-right: 2.5rem;
+  }
+  .check {
+    width: 1.15rem;
+    height: 1.15rem;
+    accent-color: var(--color-g-blue);
+  }
+
+  /* Surfaces */
+  .panel {
+    border: 1px solid var(--color-line);
+    background: var(--color-coal);
+    border-radius: 1.25rem;
+  }
+
+  /* Native dialog */
+  dialog.dialog {
+    margin: auto;
+    width: min(28rem, calc(100vw - 2rem));
+    padding: 1.5rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 1.25rem;
+    background: var(--color-coal);
+    color: var(--color-fog);
+  }
+  dialog.dialog::backdrop {
+    background: rgb(0 0 0 / 0.65);
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    background: linear-gradient(100deg, var(--color-coal) 30%, var(--color-coal-2) 50%, var(--color-coal) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* QR page: print only the code card, on white. */
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-sheet { border: none !important; background: #fff !important; color: #000 !important; }
+}
