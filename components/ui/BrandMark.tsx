@@ -5,10 +5,13 @@ import { BRAND_LOGO_SRC } from "@/lib/config";
  * replaced with the organisers' approved asset before launch.
  */
 export function BrandMark({ className = "" }: { className?: string }) {
-  if (BRAND_LOGO_SRC) {
+    if (BRAND_LOGO_SRC) {
+    // The official logo has dark text, so it sits on a white chip to stay readable on the dark theme.
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={BRAND_LOGO_SRC} alt={`${ORG_NAME} logo`} className={`h-9 w-auto ${className}`} />
+      <span className={`inline-flex items-center rounded-xl bg-white px-3 py-1.5 ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={BRAND_LOGO_SRC} alt="Google Developer Groups Noida" className="h-6 w-auto sm:h-7" />
+      </span>
     );
   }
   return (
