@@ -8,7 +8,7 @@ export function BrandMark({ className = "" }: { className?: string }) {
     if (BRAND_LOGO_SRC) {
     // The official logo has dark text, so it sits on a white chip to stay readable on the dark theme.
     return (
-      <span className={`inline-flex items-center rounded-xl bg-white px-3 py-1.5 ${className}`}>
+      <span className={`inline-flex items-center rounded-xl ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={BRAND_LOGO_SRC} alt="Google Developer Groups Noida" className="h-6 w-auto sm:h-7" />
       </span>
