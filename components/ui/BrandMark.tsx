@@ -1,5 +1,4 @@
-import { BRAND_LOGO_SRC, ORG_NAME } from "@/lib/config";
-
+import { BRAND_LOGO_SRC } from "@/lib/config";
 /**
  * Logo slot. Shows the approved logo when BRAND_LOGO_SRC is set in lib/config.ts.
  * Until then it renders a neutral placeholder tile. This is NOT the GDG logo and must be
