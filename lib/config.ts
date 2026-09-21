@@ -11,8 +11,7 @@ export const APP_NAME = "GDG Noida Volunteer Directory";
  * /public/brand/gdg-noida-logo.svg) and set this to "/brand/gdg-noida-logo.svg".
  * Do not draw or approximate the official GDG logo: use the asset from the organisers.
  */
-export const BRAND_LOGO_SRC: string | null = null;
-
+export const BRAND_LOGO_SRC: string | null = "/gdg-noida-logo.png";
 /** Volunteers per page on the public directory and in the admin list. */
 export const DIRECTORY_PAGE_SIZE = 24;
 export const ADMIN_PAGE_SIZE = 25;
