@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ORG_NAME } from "@/lib/config";
+import { BRAND_LOGO_SRC, ORG_NAME } from "@/lib/config";
 import { BrandMark } from "@/components/ui/BrandMark";
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
