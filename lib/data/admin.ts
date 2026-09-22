@@ -19,6 +19,8 @@ export class AdminDataError extends Error {
 
 const teamRefSchema = z.object({ id: z.string(), name: z.string(), slug: z.string() });
 
+  submission_status: z.enum(["pending", "approved", "rejected", "update-pending"]),
+  pending_changes: z.record(z.string(), z.unknown()).nullable(),
 const volunteerRowSchema = z.object({
   id: z.string(),
   full_name: z.string(),
@@ -60,8 +62,7 @@ export type AdminVolunteer = {
 };
 
 const ADMIN_COLUMNS =
-  "id, full_name, slug, team_id, public_role, bio, photo_path, skills, social_links, is_published, consent_status, consent_recorded_at, consent_version, created_at, updated_at, published_at, team:teams(id, name, slug)";
-
+  "id, full_name, slug, team_id, public_role, bio, photo_path, skills, social_links, is_published, consent_status, consent_recorded_at, consent_version, created_at, updated_at, published_at, submission_status, pending_changes, team:teams(id, name, slug)";
 function toAdminVolunteer(input: unknown): AdminVolunteer {
   const row = volunteerRowSchema.parse(input);
   const socialLinks: SocialLinks = {};
@@ -91,14 +92,18 @@ function toAdminVolunteer(input: unknown): AdminVolunteer {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
+    submissionStatus: row.submission_status,
+    pendingChanges: row.pending_changes,
   };
 }
 
-export const STATUS_FILTERS = ["all", "published", "draft", "consent-missing"] as const;
-export type StatusFilter = (typeof STATUS_FILTERS)[number];
-
-export type AdminVolunteerQuery = { q: string; team: string | null; status: StatusFilter; page: number };
-
+export const STATUS_FILTERS = ["all", "published", "draft", "consent-missing", "pending-review"] as const;export type StatusFilter = (typeof STATUS_FILTERS)[number];
+export type AdminVolunteer = {
+  ...
+  publishedAt: string | null;
+  submissionStatus: "pending" | "approved" | "rejected" | "update-pending";
+  pendingChanges: Record<string, unknown> | null;
+};
 export async function listAdminVolunteers(supabase: SupabaseClient, query: AdminVolunteerQuery) {
   const from = (query.page - 1) * ADMIN_PAGE_SIZE;
   const to = from + ADMIN_PAGE_SIZE - 1;
@@ -119,6 +124,7 @@ export async function listAdminVolunteers(supabase: SupabaseClient, query: Admin
   if (query.status === "published") request = request.eq("is_published", true);
   else if (query.status === "draft") request = request.eq("is_published", false);
   else if (query.status === "consent-missing") request = request.neq("consent_status", "granted");
+  else if (query.status === "pending-review") request = request.in("submission_status", ["pending", "update-pending"]);
 
   const { data, error, count } = await request;
   if (error) {
