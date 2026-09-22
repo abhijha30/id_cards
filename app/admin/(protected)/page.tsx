@@ -10,7 +10,6 @@ import { normalizeSearchText } from "@/lib/utils/search";
 import { isUuid } from "@/lib/validation/common";
 import { deleteVolunteer, setPublished } from "./volunteers/actions";
 import { approveSubmission, generateUploadLink, rejectSubmission } from "./volunteers/invite-actions";
-
 export const metadata = { title: "Volunteers" };
 
 type Props = {
