@@ -1,7 +1,21 @@
-export function LinkedInIcon({ className = "h-4 w-4" }: { className?: string }) {
+/**
+ * Small LinkedIn glyph shown next to a name. Renders nothing when there is no LinkedIn URL —
+ * this is the only requested change to the existing social system; SocialLinks.tsx is untouched.
+ */
+export function LinkedInIcon({ url, name }: { url: string | undefined; name: string }) {
+  if (!url) return null;
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z" />
-    </svg>
+    
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer nofollow ugc"
+      aria-label={`${name} on LinkedIn`}
+      onClick={(event) => event.stopPropagation()}
+      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[#0A66C2] hover:opacity-80"
+    >
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
+      </svg>
+    </a>
   );
 }
