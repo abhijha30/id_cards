@@ -1,116 +1,131 @@
-import { Suspense } from "react";
+import { cache } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/ui/PublicShell";
-import { DirectorySearch } from "@/components/directory/DirectorySearch";
-import { TeamFilter } from "@/components/directory/TeamFilter";
-import { VolunteerCard } from "@/components/directory/VolunteerCard";
-import { Pagination } from "@/components/directory/Pagination";
-import { ResultsSkeleton } from "@/components/directory/ResultsSkeleton";
-import { directoryHref, parseDirectoryParams, type DirectoryParams, type SearchParamValue } from "@/lib/directory-params";
-import { listPublicTeams, listPublicVolunteers, type PublicTeam } from "@/lib/data/public";
+import { VolunteerAvatar } from "@/components/volunteer/VolunteerAvatar";
+import { TeamBadge } from "@/components/volunteer/TeamBadge";
+import { SocialLinks } from "@/components/volunteer/SocialLinks";
+import { LinkedInIcon } from "@/components/ui/LinkedInIcon";
+import { ShareProfile } from "@/components/volunteer/ShareProfile";
+import { ORG_NAME, SEARCH_ENGINE_INDEXING } from "@/lib/config";
+import { getPublicVolunteerBySlug } from "@/lib/data/public";
+import { teamAccent } from "@/lib/utils/team-accent";
 
-type Props = {
-  searchParams: Promise<{ q?: SearchParamValue; team?: SearchParamValue; page?: SearchParamValue }>;
-};
+type Props = { params: Promise<{ slug: string }> };
 
-export default async function DirectoryPage({ searchParams }: Props) {
-  const params = parseDirectoryParams(await searchParams);
+// One lookup per request, shared by the page and its metadata.
+const loadVolunteer = cache(getPublicVolunteerBySlug);
+
+function describe(role: string | null, team: string | null, bio: string | null): string {
+  if (bio) return bio.length > 155 ? `${bio.slice(0, 154).trimEnd()}…` : bio;
+  const parts = [role, team ? `${team} team` : null].filter(Boolean).join(", ");
+  return parts ? `${parts} at ${ORG_NAME}.` : `${ORG_NAME} volunteer.`;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const volunteer = await loadVolunteer(slug).catch(() => null);
+
+  // Unpublished, unconsented and unknown profiles all look identical: nothing is disclosed.
+  if (!volunteer) return { title: "Profile not available", robots: { index: false, follow: false } };
+
+  const description = describe(volunteer.publicRole, volunteer.team?.name ?? null, volunteer.bio);
+  const image = volunteer.hasPhoto ? [{ url: `/photos/${volunteer.slug}?v=${encodeURIComponent(volunteer.updatedAt)}`, alt: volunteer.fullName }] : undefined;
+
+  return {
+    title: volunteer.fullName,
+    description,
+    robots: SEARCH_ENGINE_INDEXING ? undefined : { index: false, follow: false },
+    openGraph: { title: `${volunteer.fullName} | ${ORG_NAME}`, description, type: "profile", images: image },
+    twitter: { card: image ? "summary_large_image" : "summary", title: `${volunteer.fullName} | ${ORG_NAME}`, description },
+  };
+}
+
+export default async function VolunteerPage({ params }: Props) {
+  const { slug } = await params;
+  const volunteer = await loadVolunteer(slug);
+  if (!volunteer) notFound();
+
+  const accent = teamAccent(volunteer.team?.slug);
 
   return (
     <PublicShell>
-      <section className="max-w-3xl">
-        <h1 className="text-4xl font-bold sm:text-6xl">Find a GDG Noida volunteer</h1>
-        <p className="mt-5 text-lg text-mist">
-          Scanned a volunteer&rsquo;s ID card? Search the name printed on it to confirm who you are speaking with.
-        </p>
-      </section>
+      <Link href="/" className="btn btn-quiet btn-sm -ml-3 mb-6">
+        All volunteers
+      </Link>
 
-      <div className="mt-8 max-w-3xl">
-        <DirectorySearch initialQuery={params.q} team={params.team} />
-      </div>
+      <article className="grid gap-10 md:grid-cols-[minmax(0,20rem)_1fr] md:gap-14">
+        <div className="mx-auto w-full max-w-xs md:mx-0 md:max-w-none">
+          <div className="rounded-[1.4rem] border border-line bg-coal p-2">
+            <VolunteerAvatar
+              slug={volunteer.slug}
+              name={volunteer.fullName}
+              hasPhoto={volunteer.hasPhoto}
+              version={volunteer.updatedAt}
+              accent={accent}
+              priority
+            />
+          </div>
+        </div>
 
-      <div className="mt-6">
-        <Suspense fallback={<div className="skeleton h-10 w-full max-w-xl rounded-full" aria-hidden="true" />}>
-          <Teams q={params.q} active={params.team} />
-        </Suspense>
-      </div>
+        <div className="max-w-2xl">
+          <h1 className="flex flex-wrap items-center gap-2 text-4xl font-bold sm:text-5xl">
+            {volunteer.fullName}
+            <LinkedInIcon url={volunteer.socialLinks.linkedin} name={volunteer.fullName} />
+          </h1>
+          {volunteer.publicRole && <p className="mt-3 text-xl text-mist">{volunteer.publicRole}</p>}
+          {volunteer.team && (
+            <div className="mt-4">
+              <TeamBadge name={volunteer.team.name} slug={volunteer.team.slug} />
+            </div>
+          )}
 
-      <div className="mt-10">
-        <Suspense key={`${params.q}|${params.team}|${params.page}`} fallback={<ResultsSkeleton />}>
-          <Results params={params} />
-        </Suspense>
-      </div>
+          {volunteer.bio && (
+            <section aria-labelledby="about-heading" className="mt-8">
+              <h2 id="about-heading" className="mb-2 text-lg font-semibold">
+                About
+              </h2>
+              <p className="whitespace-pre-line text-lg leading-relaxed text-fog/90">{volunteer.bio}</p>
+            </section>
+          )}
+
+          {volunteer.skills.length > 0 && (
+            <section aria-labelledby="skills-heading" className="mt-8">
+              <h2 id="skills-heading" className="mb-3 text-lg font-semibold">
+                Skills
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {volunteer.skills.map((skill) => (
+                  <li key={skill} className="rounded-full border border-line-strong px-3 py-1 text-sm text-mist">
+                    {skill}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {Object.keys(volunteer.socialLinks).length > 0 && (
+            <section aria-labelledby="links-heading" className="mt-8">
+              <h2 id="links-heading" className="mb-3 text-lg font-semibold">
+                Links
+              </h2>
+              <SocialLinks links={volunteer.socialLinks} />
+            </section>
+          )}
+
+          <div className="mt-10 border-t border-line pt-6">
+            <ShareProfile name={volunteer.fullName} />
+            <p className="mt-5 text-sm text-dim">
+              Listed with the volunteer&rsquo;s consent. To correct or remove a profile, see the{" "}
+              <Link href="/privacy" className="text-mist underline underline-offset-4">
+                privacy page
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </article>
     </PublicShell>
-  );
-}
-
-async function Teams({ q, active }: { q: string; active: string | null }) {
-  let teams: PublicTeam[];
-  try {
-    teams = await listPublicTeams();
-  } catch (error) {
-    // Team chips are a convenience; the directory still works without them.
-    console.error("Could not load teams", error);
-    return null;
-  }
-  return <TeamFilter teams={teams} q={q} active={active} />;
-}
-
-async function Results({ params }: { params: DirectoryParams }) {
-  let result;
-  try {
-    result = await listPublicVolunteers(params);
-  } catch (error) {
-    console.error("Could not load the directory", error);
-    return (
-      <div role="alert" className="panel max-w-xl p-6">
-        <h2 className="text-xl font-semibold">The directory could not be loaded</h2>
-        <p className="mt-2 text-mist">Something went wrong on our side. Please try again in a moment.</p>
-        <Link href={directoryHref({ q: params.q, team: params.team })} className="btn mt-4">
-          Try again
-        </Link>
-      </div>
-    );
-  }
-
-  // A page number beyond the last page (for example an old bookmark): jump to the last real page.
-  if (result.volunteers.length === 0 && result.total > 0 && params.page > result.pageCount) {
-    redirect(directoryHref({ q: params.q, team: params.team, page: result.pageCount }));
-  }
-
-  const filtered = params.q !== "" || params.team !== null;
-
-  if (result.total === 0) {
-    return (
-      <div className="panel max-w-xl p-6">
-        <h2 className="text-xl font-semibold">{filtered ? "No volunteers match that search" : "No volunteers are listed yet"}</h2>
-        <p className="mt-2 text-mist">
-          {filtered
-            ? "Check the spelling, try fewer letters, or remove the team filter. A volunteer who has not agreed to be listed will not appear here."
-            : "Profiles appear here once volunteers have agreed to be listed."}
-        </p>
-        {filtered && (
-          <Link href="/" className="btn mt-4">
-            Clear search and filters
-          </Link>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <section aria-labelledby="results-heading">
-      <h2 id="results-heading" className="mb-6 text-base font-normal text-mist" aria-live="polite">
-        {result.total} {result.total === 1 ? "volunteer" : "volunteers"}
-        {params.q ? <> matching &ldquo;{params.q}&rdquo;</> : null}
-      </h2>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
-        {result.volunteers.map((volunteer, index) => (
-          <VolunteerCard key={volunteer.id} volunteer={volunteer} priority={index < 4} />
-        ))}
-      </ul>
-      <Pagination page={result.page} pageCount={result.pageCount} q={params.q} team={params.team} />
-    </section>
   );
 }
