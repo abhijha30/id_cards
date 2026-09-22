@@ -10,6 +10,7 @@ import { ShareProfile } from "@/components/volunteer/ShareProfile";
 import { ORG_NAME, SEARCH_ENGINE_INDEXING } from "@/lib/config";
 import { getPublicVolunteerBySlug } from "@/lib/data/public";
 import { teamAccent } from "@/lib/utils/team-accent";
+import { LinkedInIcon } from "@/components/ui/LinkedInIcon";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -69,7 +70,20 @@ export default async function VolunteerPage({ params }: Props) {
         </div>
 
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold sm:text-5xl">{volunteer.fullName}</h1>
+                    <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-4xl font-bold sm:text-5xl">{volunteer.fullName}</h1>
+            {volunteer.socialLinks.linkedin && (
+              
+                href={volunteer.socialLinks.linkedin}
+                target="_blank"
+                rel="noopener noreferrer nofollow ugc"
+                aria-label={`${volunteer.fullName}'s LinkedIn profile`}
+                className="text-dim transition-colors hover:text-fog"
+              >
+                <LinkedInIcon className="h-5 w-5" />
+              </a>
+            )}
+          </div>
           {volunteer.publicRole && <p className="mt-3 text-xl text-mist">{volunteer.publicRole}</p>}
           {volunteer.team && (
             <div className="mt-4">
