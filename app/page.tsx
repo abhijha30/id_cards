@@ -1,4 +1,3 @@
-```tsx
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -32,7 +31,8 @@ type Props = {
 };
 
 export default async function DirectoryPage({ searchParams }: Props) {
-  const params = parseDirectoryParams(await searchParams);
+  const rawSearchParams = await searchParams;
+  const params = parseDirectoryParams(rawSearchParams);
 
   return (
     <PublicShell>
@@ -94,7 +94,8 @@ async function Teams({
   try {
     teams = await listPublicTeams();
   } catch (error) {
-    // Team chips are a convenience; the directory still works without them.
+    // Team filters are optional. The directory should still work
+    // if the teams query fails.
     console.error("Could not load teams", error);
     return null;
   }
@@ -146,8 +147,10 @@ async function Results({
     );
   }
 
-  // A page number beyond the last page (for example an old bookmark):
-  // jump to the last real page.
+  /*
+   * If someone opens an old bookmark pointing to a page
+   * that no longer exists, redirect them to the last valid page.
+   */
   if (
     result.volunteers.length === 0 &&
     result.total > 0 &&
@@ -166,6 +169,9 @@ async function Results({
     params.q !== "" ||
     params.team !== null;
 
+  /*
+   * No results at all.
+   */
   if (result.total === 0) {
     return (
       <div className="panel max-w-xl p-6">
@@ -181,14 +187,14 @@ async function Results({
             : "Profiles appear here once volunteers have agreed to be listed."}
         </p>
 
-        {filtered && (
+        {filtered ? (
           <Link
             href="/"
             className="btn mt-4"
           >
             Clear search and filters
           </Link>
-        )}
+        ) : null}
       </div>
     );
   }
@@ -230,4 +236,3 @@ async function Results({
     </section>
   );
 }
-```
