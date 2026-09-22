@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Notice } from "@/components/admin/Notice";
-import { ConsentBadge, PublishedBadge } from "@/components/admin/StatusBadges";
+import { ConsentBadge, PublishedBadge, SubmissionStatusBadge } from "@/components/admin/StatusBadges";
+import { InviteLinkPanel } from "@/components/admin/InviteLinkPanel";
+import { PendingChangesPanel } from "@/components/admin/PendingChangesPanel";
 import { VolunteerForm } from "@/components/admin/VolunteerForm";
 import { PhotoUploader } from "@/components/uploader/PhotoUploader";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { requireAdmin } from "@/lib/auth/admin";
 import { getAdminVolunteer, listTeamOptions, signPhotoUrls } from "@/lib/data/admin";
 import { deleteVolunteer, updateVolunteer } from "../../actions";
+import { approveSubmission, generateUpdateLink, rejectSubmission } from "../../invite-actions";
 
 export const metadata = { title: "Edit volunteer" };
 
@@ -29,6 +33,10 @@ export default async function EditVolunteerPage({ params, searchParams }: Props)
     signPhotoUrls(supabase, volunteer.photoPath ? [volunteer.photoPath] : []),
   ]);
   const photoUrl = volunteer.photoPath ? (photoUrls[volunteer.photoPath] ?? null) : null;
+  const boundGenerateUpdateLink = generateUpdateLink.bind(null, volunteer.id);
+  const pendingChanges = volunteer.pendingChanges as
+    | { full_name?: string; public_role?: string | null; bio?: string | null; skills?: string[] }
+    | null;
 
   return (
     <div>
@@ -42,6 +50,7 @@ export default async function EditVolunteerPage({ params, searchParams }: Props)
           <div className="mt-3 flex flex-wrap gap-2">
             <PublishedBadge published={volunteer.isPublished} />
             <ConsentBadge status={volunteer.consentStatus} />
+            <SubmissionStatusBadge status={volunteer.submissionStatus} />
           </div>
         </div>
         {volunteer.isPublished && (
@@ -52,6 +61,52 @@ export default async function EditVolunteerPage({ params, searchParams }: Props)
       </div>
 
       <Notice notice={sp.notice} error={sp.error} />
+
+      {volunteer.submissionStatus === "pending" && (
+        <section aria-labelledby="review-heading" className="mb-8 rounded-[1.25rem] border border-g-yellow/40 bg-g-yellow/5 p-6">
+          <h2 id="review-heading" className="text-xl font-semibold">
+            Submitted by a team member, awaiting your review
+          </h2>
+          <p className="mb-4 mt-1 text-sm text-mist">Check the details below, then approve to publish it or reject to keep it hidden.</p>
+          <div className="flex flex-wrap gap-3">
+            <form action={approveSubmission}>
+              <input type="hidden" name="id" value={volunteer.id} />
+              <SubmitButton className="btn btn-primary" pendingLabel="Working...">
+                Approve and publish
+              </SubmitButton>
+            </form>
+            <form action={rejectSubmission}>
+              <input type="hidden" name="id" value={volunteer.id} />
+              <SubmitButton className="btn" pendingLabel="Working...">
+                Reject
+              </SubmitButton>
+            </form>
+          </div>
+        </section>
+      )}
+
+      {pendingChanges && (
+        <div className="mb-8">
+          <PendingChangesPanel
+            volunteerId={volunteer.id}
+            current={{ fullName: volunteer.fullName, publicRole: volunteer.publicRole, bio: volunteer.bio, skills: volunteer.skills }}
+            pending={pendingChanges}
+          />
+        </div>
+      )}
+
+      <section aria-labelledby="invite-heading" className="panel mb-8 p-5">
+        <h2 id="invite-heading" className="text-lg font-semibold">
+          Update link for this volunteer
+        </h2>
+        <p className="mt-1 text-sm text-mist">
+          Send this to let {volunteer.fullName} update their own details. Their change waits for your approval above before it goes
+          live.
+        </p>
+        <div className="mt-3">
+          <InviteLinkPanel label="Generate update link" generate={boundGenerateUpdateLink} />
+        </div>
+      </section>
 
       <div className="grid gap-8 lg:grid-cols-[20rem_1fr]">
         <aside>
