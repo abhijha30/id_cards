@@ -6,7 +6,7 @@ export function LinkedInIcon({ url, name }: { url: string | undefined; name: str
   if (!url) return null;
   return (
     
-      href={url},
+      href={url}
       target="_blank"
       rel="noopener noreferrer nofollow ugc"
       aria-label={`${name} on LinkedIn`}
