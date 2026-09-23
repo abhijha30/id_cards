@@ -1,9 +1,9 @@
+"use client";
+
 /**
  * Small LinkedIn glyph shown next to a name. Renders nothing when there is no LinkedIn URL —
  * this is the only requested change to the existing social system; SocialLinks.tsx is untouched.
  */
-"use client";
-
 export function LinkedInIcon({ url, name }: { url: string | undefined; name: string }) {
   if (!url) return null;
   return (
