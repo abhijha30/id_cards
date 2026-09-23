@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Notice } from "@/components/admin/Notice";
-import { ConsentBadge, PublishedBadge } from "@/components/admin/StatusBadges";
+import { ConsentBadge, PublishedBadge, SubmissionStatusBadge } from "@/components/admin/StatusBadges";
+import { InviteLinkPanel } from "@/components/admin/InviteLinkPanel";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { requireAdmin } from "@/lib/auth/admin";
@@ -8,6 +9,7 @@ import { listAdminVolunteers, listTeamOptions, signPhotoUrls, STATUS_FILTERS, ty
 import { normalizeSearchText } from "@/lib/utils/search";
 import { isUuid } from "@/lib/validation/common";
 import { deleteVolunteer, setPublished } from "./actions";
+import { approveSubmission, generateUploadLink, rejectSubmission } from "./invite-actions";
 
 export const metadata = { title: "Volunteers" };
 
@@ -34,6 +36,7 @@ const STATUS_LABELS: Record<StatusFilter, string> = {
   published: "Published",
   draft: "Not published",
   "consent-missing": "Consent not granted",
+  "pending-review": "Needs review",
 };
 
 export default async function AdminVolunteersPage({ searchParams }: Props) {
@@ -74,6 +77,19 @@ export default async function AdminVolunteersPage({ searchParams }: Props) {
           Add a volunteer
         </Link>
       </div>
+
+      <section aria-labelledby="invite-heading" className="panel mb-8 p-5">
+        <h2 id="invite-heading" className="text-lg font-semibold">
+          Team upload link
+        </h2>
+        <p className="mt-1 text-sm text-mist">
+          Generate a private link and send it to a team member so they can submit their own profile. Submissions need your approval
+          before they appear on the public site.
+        </p>
+        <div className="mt-3">
+          <InviteLinkPanel label="Generate upload link" generate={generateUploadLink} />
+        </div>
+      </section>
 
       <Notice notice={sp.notice} error={sp.error} />
 
@@ -150,6 +166,7 @@ export default async function AdminVolunteersPage({ searchParams }: Props) {
                   <div className="mt-2 flex flex-wrap gap-2">
                     <PublishedBadge published={v.isPublished} />
                     <ConsentBadge status={v.consentStatus} />
+                    <SubmissionStatusBadge status={v.submissionStatus} />
                   </div>
                 </div>
 
@@ -157,6 +174,22 @@ export default async function AdminVolunteersPage({ searchParams }: Props) {
                   <Link href={`/admin/volunteers/${v.id}/edit`} className="btn btn-sm">
                     Edit
                   </Link>
+                  {v.submissionStatus === "pending" && (
+                    <>
+                      <form action={approveSubmission}>
+                        <input type="hidden" name="id" value={v.id} />
+                        <SubmitButton className="btn btn-sm btn-primary" pendingLabel="Working...">
+                          Approve
+                        </SubmitButton>
+                      </form>
+                      <form action={rejectSubmission}>
+                        <input type="hidden" name="id" value={v.id} />
+                        <SubmitButton className="btn btn-sm" pendingLabel="Working...">
+                          Reject
+                        </SubmitButton>
+                      </form>
+                    </>
+                  )}
                   <form action={setPublished}>
                     <input type="hidden" name="id" value={v.id} />
                     <input type="hidden" name="publish" value={v.isPublished ? "false" : "true"} />
